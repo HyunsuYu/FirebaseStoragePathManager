@@ -138,6 +138,42 @@ namespace FirebaseStoragePathManager
                 get => mbranchNodeNames;
             }
 
+            internal static bool AddNode(in InputPack_Directory inputPack_Directory)
+            {
+                if(inputPack_Directory.UpperNode.AbstractFileType == EAbstractFileType.File)
+                {
+                    return false;
+                }
+
+                new Node(inputPack_Directory);
+                return true;
+            }
+            internal static bool AddNode(in InputPack_File inputPack_File)
+            {
+                if(inputPack_File.UpperNode.AbstractFileType == EAbstractFileType.File)
+                {
+                    return false;
+                }
+
+                new Node(inputPack_File);
+                return true;
+            }
+            internal static void RemoveNode(in Node targetNode)
+            {
+                if(targetNode.BranchNodeNames.Count != 0)
+                {
+                    for(int i = 0; i < targetNode.BranchNodeNames.Count; i++)
+                    {
+                        RemoveNode(targetNode.BranchNodes[targetNode.BranchNodeNames[i]]);
+                    }
+                }
+
+                targetNode.mfullPath = null;
+                targetNode.mfileName = null;
+                targetNode.mfileExtension.Clear();
+                targetNode.mbranchNodeNames.Clear();
+                targetNode.mbranchNodes.Clear();
+            }
             public static string GetCompletePath(in Node targetNode)
             {
                 switch(targetNode.AbstractFileType)
@@ -170,7 +206,6 @@ namespace FirebaseStoragePathManager
 
 
 
-
         public Node FundementalNode
         {
             get => mfundementalNode;
@@ -178,8 +213,21 @@ namespace FirebaseStoragePathManager
         public string PathManagerRoll
         {
             get => mpathManagerRoll;
+            set => mpathManagerRoll = value;
         }
 
+        public bool AddNode(Node.InputPack_Directory inputPack_Directory)
+        {
+            return Node.AddNode(inputPack_Directory);
+        }
+        public bool AddNode(in Node.InputPack_File inputPack_File)
+        {
+            return Node.AddNode(inputPack_File);
+        }
+        public void RemoveNode(in Node targetNode)
+        {
+            Node.RemoveNode(targetNode);
+        }
         public byte[] GetJsonData()
         {
             return System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(this));
