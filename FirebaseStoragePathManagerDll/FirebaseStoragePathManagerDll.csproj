@@ -8,4 +8,10 @@
     <Exec Command="copy &quot;$(TargetPath)&quot; &quot;D:\Private\Private Project\Lab 3\Assets\Plugins\FirebaseStoragePathManagerDll.dll&quot;" />
   </Target>
 
+  <ItemGroup>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\..\Newtonsoft_Json\Bin\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>
