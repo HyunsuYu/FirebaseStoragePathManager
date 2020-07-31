@@ -1,232 +1,235 @@
 ﻿using System.Collections.Generic;
+using System.Dynamic;
+using System.IO;
 using Newtonsoft.Json;
 
 namespace FirebaseStoragePathManager
 {
-    public class FirebaseStoragePathManager
+    public class EditorPathManager
     {
-        public enum EAbstractFileType
+        public enum EDetailType
         {
-            File = 1,
-            Directory = 2
+            AxisFullPack = 1,
+            AxisPalette = 2,
+            AxisOrderedCube = 3,
+            AxisOrderedType = 4,
+            DirectPalette = 5,
+            DirectPack = 6
+        };
+        public enum EFileType
+        {
+            Json = 1,
+            PNG = 2
         };
 
         public class Node
         {
-            public struct InputPack_Directory
+            public struct InputPack
             {
-                private Node mupperNode;
                 private string mfileName;
+                private EDetailType mdetailType;
+                private EFileType mfileType;
 
-                public InputPack_Directory(in Node upperNode, string fileName)
+                public InputPack(string fileName, EDetailType detailType, EFileType fileType)
                 {
-                    mupperNode = upperNode;
                     mfileName = fileName;
+                    mdetailType = detailType;
+                    mfileType = fileType;
+                }
+                public InputPack(InputPack inputPack)
+                {
+                    mfileName = inputPack.FileName;
+                    mdetailType = inputPack.DetailType;
+                    mfileType = inputPack.FileType;
                 }
 
-                public Node UpperNode
-                {
-                    get => mupperNode;
-                }
                 public string FileName
                 {
                     get => mfileName;
                 }
-            };
-            public struct InputPack_File
-            {
-                private Node mupperNode;
-                private string mfileName;
-                private List<string> mfileExtension;
-
-                public InputPack_File(in Node upperNode, string fileName, in List<string> fileExtension)
+                public EDetailType DetailType
                 {
-                    mupperNode = upperNode;
-                    mfileName = fileName;
-                    mfileExtension = fileExtension;
+                    get => mdetailType;
                 }
-
-                public Node UpperNode
+                public EFileType FileType
                 {
-                    get => mupperNode;
+                    get => mfileType;
                 }
-                public string FIleName
-                {
-                    get => mfileName;
-                }
-                public List<string> FileExtension
-                {
-                    get => mfileExtension;
-                }
-            };
-
-
+            }
 
             private string mfileName;
-            private string mfullPath;
-            private List<string> mfileExtension;
+            private EDetailType mdetailType;
+            private EFileType mfileType;
 
-            private EAbstractFileType mabstractFileType;
-
-            private Dictionary<string, Node> mbranchNodes;
-            private List<string> mbranchNodeNames;
-
-
-
-            /// <summary>
-            /// Create new directory node
-            /// </summary>
-            /// <param name="upperNode"></param>
-            /// <param name="fileName"></param>
-            public Node(in InputPack_Directory inputPack)
+            public Node(InputPack inputPack)
             {
                 mfileName = inputPack.FileName;
-                mfullPath = CombinePath(inputPack.UpperNode.FullPath, inputPack.FileName);
-                mfileExtension = null;
-
-                mabstractFileType = EAbstractFileType.Directory;
-
-                mbranchNodes = new Dictionary<string, Node>();
-                mbranchNodeNames = new List<string>();
-
-                inputPack.UpperNode.BranchNodes.Add(inputPack.FileName, this);
-                inputPack.UpperNode.BranchNodeNames.Add(inputPack.FileName);
-            }
-            /// <summary>
-            /// Create new file node
-            /// </summary>
-            /// <param name="upperNode"></param>
-            /// <param name="fileName"></param>
-            /// <param name="fileExtension"></param>
-            public Node(in InputPack_File inputPack)
-            {
-                mfileName = inputPack.FIleName;
-                mfullPath = CombinePath(inputPack.UpperNode.FullPath, inputPack.FIleName);
-                mfileExtension = inputPack.FileExtension;
-
-                mabstractFileType = EAbstractFileType.File;
-
-                mbranchNodes = null;
-                mbranchNodeNames = null;
-
-                inputPack.UpperNode.BranchNodes.Add(inputPack.FIleName, this);
-                inputPack.UpperNode.BranchNodeNames.Add(inputPack.FIleName);
+                mdetailType = inputPack.DetailType;
+                mfileType = inputPack.FileType;
             }
 
             public string FileName
             {
                 get => mfileName;
             }
-            public string FullPath
+            public EDetailType DetailType
             {
-                get => mfullPath;
+                get => mdetailType;
             }
-            public List<string> FileExtension
+            public EFileType FileType
             {
-                get => mfileExtension;
-            }
-            public EAbstractFileType AbstractFileType
-            {
-                get => mabstractFileType;
-            }
-            public Dictionary<string, Node> BranchNodes
-            {
-                get => mbranchNodes;
-            }
-            public List<string> BranchNodeNames
-            {
-                get => mbranchNodeNames;
+                get => mfileType;
             }
 
-            internal static bool AddNode(in InputPack_Directory inputPack_Directory)
+            public string GetFullPath()
             {
-                if(inputPack_Directory.UpperNode.AbstractFileType == EAbstractFileType.File)
+                string tempPath = "";
+
+                switch(DetailType)
                 {
-                    return false;
+                    case EDetailType.AxisFullPack:
+                        tempPath = Axis_FullPackURL + FileName + Axis_FullPackExtension;
+                        break;
+
+                    case EDetailType.AxisPalette:
+                        tempPath = Axis_PaletteURL + FileName + Axis_PaletteExtension;
+                        break;
+
+                    case EDetailType.AxisOrderedCube:
+                        tempPath = Axis_OrderedCubeURL + FileName + Axis_OrderedCubeExtension;
+                        break;
+
+                    case EDetailType.AxisOrderedType:
+                        tempPath = Axis_OrderedTypeURL + FileName + Axis_OrderedTypeExtension;
+                        break;
                 }
 
-                new Node(inputPack_Directory);
+                switch(FileType)
+                {
+                    case EFileType.Json:
+                        tempPath += ".json";
+                        break;
+
+                    case EFileType.PNG:
+                        tempPath += ".png";
+                        break;
+                }
+
+                return tempPath;
+            }
+        }
+
+
+
+        private Dictionary<string, Node> mnodeTable;
+        private List<string> mnodeNames;
+        private string mstorageURL;
+
+
+
+        public EditorPathManager(string storageURL)
+        {
+            mnodeTable = new Dictionary<string, Node>();
+            mnodeNames = new List<string>();
+            mstorageURL = storageURL;
+        }
+        public EditorPathManager(EditorPathManager editorPathManager)
+        {
+            mnodeTable = editorPathManager.NodeTable;
+            mnodeNames = editorPathManager.NodeNames;
+            mstorageURL = editorPathManager.StorageURL;
+        }
+
+        public Dictionary<string, Node> NodeTable
+        {
+            get => mnodeTable;
+        }
+        public List<string> NodeNames
+        {
+            get => mnodeNames;
+        }
+        public string StorageURL
+        {
+            get => mstorageURL;
+        }
+        public static string EditorURL
+        {
+            get => "Editor/";
+        }
+        public static string AxisURL
+        {
+            get => EditorURL + "Axis/";
+        }
+        public static string Axis_FullPackURL
+        {
+            get => AxisURL + "AxisCubeTable/";
+        }
+        public static string Axis_PaletteURL
+        {
+            get => AxisURL + "Palette/";
+        }
+        public static string Axis_OrderedCubeURL
+        {
+            get => AxisURL + "OrderedCube/";
+        }
+        public static string Axis_OrderedTypeURL
+        {
+            get => AxisURL + "OrderedType";
+        }
+        public static string Axis_FullPackExtension
+        {
+            get => ".AxisFullPack";
+        }
+        public static string Axis_PaletteExtension
+        {
+            get => ".AxisPalette";
+        }
+        public static string Axis_OrderedCubeExtension
+        {
+            get => ".AxisOrderedCube";
+        }
+        public static string Axis_OrderedTypeExtension
+        {
+            get => ".AxisOrderedType";
+        }
+        public static string PathManagerURL
+        {
+            get => EditorURL + "EditorPathManager.PathManager.json";
+        }
+
+        public bool TryAddNode(Node.InputPack nodeData)
+        {
+            if(mnodeTable.ContainsKey(nodeData.FileName))
+            {
+                return false;
+            }
+
+            mnodeTable.Add(nodeData.FileName, new Node(new Node.InputPack(nodeData)));
+            mnodeNames.Add(nodeData.FileName);
+            return true;
+        }
+        public bool TryRemoveNode(string nodeName)
+        {
+            if(mnodeTable.Remove(nodeName))
+            {
+                mnodeNames.Remove(nodeName);
                 return true;
             }
-            internal static bool AddNode(in InputPack_File inputPack_File)
+            return false;
+        }
+        public List<Node> SearchSpecificNodes(EDetailType detailType)
+        {
+            List<Node> tempList = new List<Node>();
+
+            for(int index = 0; index < mnodeNames.Count; index++)
             {
-                if(inputPack_File.UpperNode.AbstractFileType == EAbstractFileType.File)
+                if(mnodeTable[mnodeNames[index]].DetailType == detailType)
                 {
-                    return false;
+                    tempList.Add(mnodeTable[mnodeNames[index]]);
                 }
-
-                new Node(inputPack_File);
-                return true;
-            }
-            internal static void RemoveNode(in Node targetNode)
-            {
-                if(targetNode.BranchNodeNames.Count != 0)
-                {
-                    for(int i = 0; i < targetNode.BranchNodeNames.Count; i++)
-                    {
-                        RemoveNode(targetNode.BranchNodes[targetNode.BranchNodeNames[i]]);
-                    }
-                }
-
-                targetNode.mfullPath = null;
-                targetNode.mfileName = null;
-                targetNode.mfileExtension.Clear();
-                targetNode.mbranchNodeNames.Clear();
-                targetNode.mbranchNodes.Clear();
-            }
-            public static string GetCompletePath(in Node targetNode)
-            {
-                switch(targetNode.AbstractFileType)
-                {
-                    case EAbstractFileType.Directory:
-                        return targetNode.FullPath;
-
-                    case EAbstractFileType.File:
-                        string tempPath = targetNode.FullPath;
-                        for(int i = 0; i < targetNode.FileExtension.Count; i++)
-                        {
-                            tempPath += "." + targetNode.FileExtension[i];
-                        }
-                        return tempPath;
-                }
-
-                return default(string);
             }
 
-            private static string CombinePath(string upperFullPath, string fileName)
-            {
-                return upperFullPath + "/" + fileName;
-            }
-        };
-
-
-
-        private Node mfundementalNode;
-        private string mpathManagerRoll;
-
-
-
-        public Node FundementalNode
-        {
-            get => mfundementalNode;
-        }
-        public string PathManagerRoll
-        {
-            get => mpathManagerRoll;
-            set => mpathManagerRoll = value;
-        }
-
-        public bool AddNode(Node.InputPack_Directory inputPack_Directory)
-        {
-            return Node.AddNode(inputPack_Directory);
-        }
-        public bool AddNode(in Node.InputPack_File inputPack_File)
-        {
-            return Node.AddNode(inputPack_File);
-        }
-        public void RemoveNode(in Node targetNode)
-        {
-            Node.RemoveNode(targetNode);
+            return tempList;
         }
         public byte[] GetJsonData()
         {
