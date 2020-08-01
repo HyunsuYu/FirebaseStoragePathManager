@@ -1,0 +1,42 @@
+using Firebase.Storage;
+using FirebaseStoragePathManager;
+using Newtonsoft.Json;
+
+public class EditorPathManagerSupport : EditorPathManager
+{
+    public EditorPathManagerSupport(string storageURL)
+    {
+        this.StorageURL = storageURL;
+    }
+
+    public bool UpdatePathManagerFile()
+    {
+        bool stateCheak = false;
+        FirebaseStorage.DefaultInstance.GetReferenceFromUrl(StorageURL).Child(EditorPathManagerSupport.PathManagerURL).PutBytesAsync(System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(this))).ContinueWith((System.Threading.Tasks.Task<StorageMetadata> task) => {
+            if (task.IsFaulted || task.IsCanceled)
+            {
+                stateCheak = false;
+            }
+            else
+            {
+                stateCheak = true;
+            }
+        });
+        return stateCheak;
+    }
+    public static EditorPathManagerSupport GetDeserializeObject(string storageURL)
+    {
+        JsonSerializerSettings jsonSerializerSettings = new JsonSerializerSettings();
+        jsonSerializerSettings.MissingMemberHandling = MissingMemberHandling.Ignore;
+
+        EditorPathManagerSupport editorPathManagerSupport = new EditorPathManagerSupport(storageURL);
+        FirebaseStorage.DefaultInstance.GetReferenceFromUrl(storageURL).Child(EditorPathManagerSupport.PathManagerURL).GetBytesAsync(1024 * 1024 * 10).ContinueWith((System.Threading.Tasks.Task<byte[]> task) => {
+            if (!(task.IsFaulted || task.IsCanceled))
+            {
+                editorPathManagerSupport.FullCopy(JsonConvert.DeserializeObject<EditorPathManagerSupport>(System.Text.Encoding.Default.GetString(task.Result), jsonSerializerSettings));
+            }
+        });
+
+        return editorPathManagerSupport;
+    }
+}
