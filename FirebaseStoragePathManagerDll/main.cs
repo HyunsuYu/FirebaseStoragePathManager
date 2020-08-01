@@ -144,6 +144,7 @@ namespace FirebaseStoragePathManager
             public string Description
             {
                 get => mdescription;
+                set => mdescription = value;
             }
             public List<EFileMarkType> FIleMarks
             {
@@ -277,10 +278,11 @@ namespace FirebaseStoragePathManager
 
             return tempList;
         }
-        public byte[] GetJsonData()
+        protected void FullCopy(EditorPathManager editorPathManager)
         {
-            return System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(this));
+            mnodeTable = editorPathManager.NodeTable;
+            mnodeNames = editorPathManager.NodeNames;
+            mstorageURL = editorPathManager.StorageURL;
         }
     }
-
 }
