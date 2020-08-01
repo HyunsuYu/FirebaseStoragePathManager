@@ -1,0 +1,1 @@
+If you use this dll in unity, then must read "UnityScriptText.txt" and make class in unity script
