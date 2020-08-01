@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Dynamic;
 using System.IO;
+using System.Security.Cryptography;
 using Newtonsoft.Json;
 
 namespace FirebaseStoragePathManager
@@ -20,6 +21,11 @@ namespace FirebaseStoragePathManager
         {
             Json = 1,
             PNG = 2
+        };
+        public enum EFileMarkType
+        {
+            Adventure = 1,
+
         };
 
         public class Node
@@ -60,12 +66,14 @@ namespace FirebaseStoragePathManager
             private string mfileName;
             private EDetailType mdetailType;
             private EFileType mfileType;
+            private MetaData mmetaData;
 
             public Node(InputPack inputPack)
             {
                 mfileName = inputPack.FileName;
                 mdetailType = inputPack.DetailType;
                 mfileType = inputPack.FileType;
+                mmetaData = new MetaData();
             }
 
             public string FileName
@@ -79,6 +87,10 @@ namespace FirebaseStoragePathManager
             public EFileType FileType
             {
                 get => mfileType;
+            }
+            public MetaData MetaData
+            {
+                get => mmetaData;
             }
 
             public string GetFullPath()
@@ -118,6 +130,34 @@ namespace FirebaseStoragePathManager
                 return tempPath;
             }
         }
+        public class MetaData
+        {
+            private string mdescription;
+            private List<EFileMarkType> mfileMarks;
+            private int mrefrenceCount, mdownloadCount;
+
+            public MetaData()
+            {
+                mfileMarks = new List<EFileMarkType>();
+            }
+
+            public string Description
+            {
+                get => mdescription;
+            }
+            public List<EFileMarkType> FIleMarks
+            {
+                get => mfileMarks;
+            }
+            public int RefrenceCount
+            {
+                get => mrefrenceCount;
+            }
+            public int DownloadCount
+            {
+                get => mdownloadCount;
+            }
+        }
 
 
 
@@ -127,6 +167,11 @@ namespace FirebaseStoragePathManager
 
 
 
+        public EditorPathManager()
+        {
+            mnodeTable = new Dictionary<string, Node>();
+            mnodeNames = new List<string>();
+        }
         public EditorPathManager(string storageURL)
         {
             mnodeTable = new Dictionary<string, Node>();
@@ -151,6 +196,7 @@ namespace FirebaseStoragePathManager
         public string StorageURL
         {
             get => mstorageURL;
+            set => mstorageURL = value;
         }
         public static string EditorURL
         {
@@ -236,4 +282,5 @@ namespace FirebaseStoragePathManager
             return System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(this));
         }
     }
+
 }
