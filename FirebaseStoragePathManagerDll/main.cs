@@ -20,7 +20,8 @@ namespace FirebaseStoragePathManager
         public enum EFileType
         {
             Json = 1,
-            PNG = 2
+            PNG = 2,
+            Txt = 3
         };
         public enum EFileMarkType
         {
@@ -124,6 +125,9 @@ namespace FirebaseStoragePathManager
 
                     case EFileType.PNG:
                         tempPath += ".png";
+                        break;
+                    case EFileType.Txt:
+                        tempPath += ".txt";
                         break;
                 }
 
@@ -241,7 +245,7 @@ namespace FirebaseStoragePathManager
         }
         public static string PathManagerURL
         {
-            get => EditorURL + "EditorPathManager.PathManager.json";
+            get => EditorURL + "EditorPathManager.PathManager.txt";
         }
 
         public bool TryAddNode(Node.InputPack nodeData)

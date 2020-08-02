@@ -1,6 +1,9 @@
 using Firebase.Storage;
 using FirebaseStoragePathManager;
 using Newtonsoft.Json;
+using System.Security.Cryptography;
+using System.Text;
+using System;
 
 public class EditorPathManagerSupport : EditorPathManager
 {
@@ -12,7 +15,7 @@ public class EditorPathManagerSupport : EditorPathManager
     public bool UpdatePathManagerFile()
     {
         bool stateCheak = false;
-        FirebaseStorage.DefaultInstance.GetReferenceFromUrl(StorageURL).Child(EditorPathManagerSupport.PathManagerURL).PutBytesAsync(System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(this))).ContinueWith((System.Threading.Tasks.Task<StorageMetadata> task) => {
+        FirebaseStorage.DefaultInstance.GetReferenceFromUrl(StorageURL).Child(EditorPathManagerSupport.PathManagerURL).PutBytesAsync(System.Text.Encoding.UTF8.GetBytes(Encrypt(JsonConvert.SerializeObject(this), "Temp"))).ContinueWith((System.Threading.Tasks.Task<StorageMetadata> task) => {
             if (task.IsFaulted || task.IsCanceled)
             {
                 stateCheak = false;
@@ -24,19 +27,60 @@ public class EditorPathManagerSupport : EditorPathManager
         });
         return stateCheak;
     }
-    public static EditorPathManagerSupport GetDeserializeObject(string storageURL)
+    public void GetDeserializeObject()
     {
         JsonSerializerSettings jsonSerializerSettings = new JsonSerializerSettings();
         jsonSerializerSettings.MissingMemberHandling = MissingMemberHandling.Ignore;
 
-        EditorPathManagerSupport editorPathManagerSupport = new EditorPathManagerSupport(storageURL);
-        FirebaseStorage.DefaultInstance.GetReferenceFromUrl(storageURL).Child(EditorPathManagerSupport.PathManagerURL).GetBytesAsync(1024 * 1024 * 10).ContinueWith((System.Threading.Tasks.Task<byte[]> task) => {
-            if (!(task.IsFaulted || task.IsCanceled))
+        FirebaseStorage.DefaultInstance.GetReferenceFromUrl(this.StorageURL).Child(EditorPathManagerSupport.PathManagerURL).GetBytesAsync(1024 * 1024 * 10).ContinueWith((task) => {
+            if (!task.IsFaulted && !task.IsCanceled)
             {
-                editorPathManagerSupport.FullCopy(JsonConvert.DeserializeObject<EditorPathManagerSupport>(System.Text.Encoding.Default.GetString(task.Result), jsonSerializerSettings));
+                this.FullCopy(JsonConvert.DeserializeObject<EditorPathManagerSupport>(Decrypt(System.Text.Encoding.Default.GetString(task.Result), "Temp"), jsonSerializerSettings));
             }
         });
+    }
 
-        return editorPathManagerSupport;
+    public static string Encrypt(string textToEncrypt, string key)
+    {
+        RijndaelManaged rijndaelCipher = new RijndaelManaged();
+        rijndaelCipher.Mode = CipherMode.CBC;
+        rijndaelCipher.Padding = PaddingMode.PKCS7;
+
+        rijndaelCipher.KeySize = 128;
+        rijndaelCipher.BlockSize = 128;
+        byte[] pwdBytes = Encoding.UTF8.GetBytes(key);
+        byte[] keyBytes = new byte[16];
+        int len = pwdBytes.Length;
+        if (len > keyBytes.Length)
+        {
+            len = keyBytes.Length;
+        }
+
+        Array.Copy(pwdBytes, keyBytes, len);
+        rijndaelCipher.Key = keyBytes;
+        rijndaelCipher.IV = keyBytes;
+        ICryptoTransform transform = rijndaelCipher.CreateEncryptor();
+        byte[] plainText = Encoding.UTF8.GetBytes(textToEncrypt);
+        return Convert.ToBase64String(transform.TransformFinalBlock(plainText, 0, plainText.Length));
+    }
+    public static string Decrypt(string textToDecrypt, string key)
+    {
+        RijndaelManaged rijndaelCipher = new RijndaelManaged();
+        rijndaelCipher.Mode = CipherMode.CBC;
+        rijndaelCipher.Padding = PaddingMode.PKCS7;
+
+        rijndaelCipher.KeySize = 128;
+        rijndaelCipher.BlockSize = 128;
+        byte[] encryptedData = Convert.FromBase64String(textToDecrypt);
+        byte[] pwdBytes = Encoding.UTF8.GetBytes(key);
+        byte[] keyBytes = new byte[16];
+        int len = pwdBytes.Length;
+        if (len > keyBytes.Length) { len = keyBytes.Length; }
+
+        Array.Copy(pwdBytes, keyBytes, len);
+        rijndaelCipher.Key = keyBytes;
+        rijndaelCipher.IV = keyBytes;
+        byte[] plainText = rijndaelCipher.CreateDecryptor().TransformFinalBlock(encryptedData, 0, encryptedData.Length);
+        return Encoding.UTF8.GetString(plainText);
     }
 }
