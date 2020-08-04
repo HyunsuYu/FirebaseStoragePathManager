@@ -12,10 +12,7 @@ namespace FirebaseStoragePathManager
         {
             AxisFullPack = 1,
             AxisPalette = 2,
-            AxisOrderedCube = 3,
-            AxisOrderedType = 4,
-            DirectPalette = 5,
-            DirectPack = 6
+            DirectFullPack = 5,
         };
         public enum EFileType
         {
@@ -108,12 +105,8 @@ namespace FirebaseStoragePathManager
                         tempPath = Axis_PaletteURL + FileName + Axis_PaletteExtension;
                         break;
 
-                    case EDetailType.AxisOrderedCube:
-                        tempPath = Axis_OrderedCubeURL + FileName + Axis_OrderedCubeExtension;
-                        break;
-
-                    case EDetailType.AxisOrderedType:
-                        tempPath = Axis_OrderedTypeURL + FileName + Axis_OrderedTypeExtension;
+                    case EDetailType.DirectFullPack:
+                        tempPath = Direct_FullPack + FileName + Direct_FullPackExtension;
                         break;
                 }
 
@@ -142,7 +135,10 @@ namespace FirebaseStoragePathManager
 
             public MetaData()
             {
+                mdescription = default(string);
                 mfileMarks = new List<EFileMarkType>();
+                mrefrenceCount = 0;
+                mdownloadCount = 0;
             }
 
             public string Description
@@ -161,6 +157,23 @@ namespace FirebaseStoragePathManager
             public int DownloadCount
             {
                 get => mdownloadCount;
+            }
+
+            public void ResetRefenceCount()
+            {
+                mrefrenceCount = 0;
+            }
+            public void ResetDoenloadCount()
+            {
+                mdownloadCount = 0;
+            }
+            public void AddRefenceCount()
+            {
+                mrefrenceCount++;
+            }
+            public void AddDownloadCount()
+            {
+                mdownloadCount++;
             }
         }
 
@@ -219,14 +232,6 @@ namespace FirebaseStoragePathManager
         {
             get => AxisURL + "Palette/";
         }
-        public static string Axis_OrderedCubeURL
-        {
-            get => AxisURL + "OrderedCube/";
-        }
-        public static string Axis_OrderedTypeURL
-        {
-            get => AxisURL + "OrderedType";
-        }
         public static string Axis_FullPackExtension
         {
             get => ".AxisFullPack";
@@ -235,13 +240,17 @@ namespace FirebaseStoragePathManager
         {
             get => ".AxisPalette";
         }
-        public static string Axis_OrderedCubeExtension
+        public static string DirectURL
         {
-            get => ".AxisOrderedCube";
+            get => EditorURL + "Direct/";
         }
-        public static string Axis_OrderedTypeExtension
+        public static string Direct_FullPack
         {
-            get => ".AxisOrderedType";
+            get => DirectURL + "DirectFullPack/";
+        }
+        public static string Direct_FullPackExtension
+        {
+            get => ".DirectFullPack";
         }
         public static string PathManagerURL
         {
